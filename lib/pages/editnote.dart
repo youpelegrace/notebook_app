@@ -1,10 +1,15 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:note_book_app/models/note.dart';
+import 'package:note_book_app/service/db.dart';
 import 'package:note_book_app/widgets/loading.dart';
 
 class EditNote extends StatefulWidget {
-  const EditNote({Key? key}) : super(key: key);
+  // const EditNote({Key? key}) : super(key: key);
+
+  late final Note note;
+  EditNote({required this.note});
 
   @override
   _EditNoteState createState() => _EditNoteState();
@@ -21,6 +26,11 @@ class _EditNoteState extends State<EditNote> {
     super.initState();
     title.text = "title";
     content.text = "content";
+    if (widget.note.id != null) {
+      editMode = true;
+      title.text = widget.note.title;
+      content.text = widget.note.content;
+    }
   }
 
   @override
@@ -73,14 +83,22 @@ class _EditNoteState extends State<EditNote> {
   }
 
   Future<void> save() async {
-    await Future.delayed(Duration(seconds: 2));
+    if (title.text != "") {
+      widget.note.title = title.text;
+      widget.note.content = content.text;
+      if (editMode)
+        await DB().update(widget.note);
+      else
+        await DB().add(widget.note);
+    }
+    ;
     setState(() {
       loading = false;
     });
   }
 
   Future<void> delete() async {
-    await Future.delayed(Duration(seconds: 2));
+    await DB().delete(widget.note);
     Navigator.pop(context);
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:note_book_app/models/note.dart';
 import 'package:note_book_app/pages/editnote.dart';
+import 'package:note_book_app/service/db.dart';
 import 'package:note_book_app/widgets/loading.dart';
 
 class NoteBook extends StatefulWidget {
@@ -10,6 +12,8 @@ class NoteBook extends StatefulWidget {
 }
 
 class _NoteBookState extends State<NoteBook> {
+  late List<Note> notes;
+
   bool loading = true;
 
   @override
@@ -29,43 +33,51 @@ class _NoteBookState extends State<NoteBook> {
         backgroundColor: Colors.black12,
       ),
       floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.orange[900],
-          child: Icon(
-            Icons.add,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            setState(
-              () {
-                loading = true;
-                Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => EditNote()))
-                    .then((value) => refresh());
-              },
-            );
-          }),
+        backgroundColor: Colors.orange[900],
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+        onPressed: () {
+          setState(
+            () {
+              loading = true;
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => EditNote(
+                            note: new Note(),
+                          ))).then((value) => refresh());
+            },
+          );
+        },
+      ),
       body: loading
           ? Loading()
           : ListView.builder(
               padding: EdgeInsets.all(5.0),
-              itemCount: 10,
+              itemCount: notes.length,
               itemBuilder: (context, index) {
+                Note note = notes[index];
                 return Card(
                   color: Colors.grey[900],
                   child: ListTile(
-                    title: Text("Title" + index.toString(),
+                    title: Text(note.title,
                         style: TextStyle(fontSize: 20, color: Colors.white)),
-                    subtitle: Text("Sample content",
+                    subtitle: Text(note.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: Colors.white)),
                     onTap: () {
                       setState(
                         () {
                           loading = true;
                           Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditNote()))
-                              .then((value) => refresh());
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EditNote(
+                                        note: note,
+                                      ))).then((value) => refresh());
                         },
                       );
                     },
@@ -76,7 +88,7 @@ class _NoteBookState extends State<NoteBook> {
   }
 
   Future<void> refresh() async {
-    await Future.delayed(Duration(seconds: 2));
+    notes = await DB().getNotes();
     setState(() => loading = false);
   }
 }
